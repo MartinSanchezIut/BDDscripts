@@ -1,0 +1,110 @@
+//ATTENTION J AI JUSTE VERIFIE QUELLES FONCTIONNAIENT PAS QU ELLES ETAIENT CORRECTES PAR RAPPORT A LA QUESTION
+
+
+//Remplir la base pour donner de meilleurs résultats (sum, avg...)
+//Reformuler mieux les questions des requêtes
+//Ajouter des ORDER BY pour mieux voir !
+
+Requêtes pour la vente de tickets : 
+
+
+OK - Requête 1 : Quel est le montant total des billets vendus par gare de départ en fonction de la saison et du mois ?
+
+//LEA requête testée avec la gare de départ 29 j'ai rajouté un ticket de 29 à 30 et la somme pour 29 printemps 11 passe de 58 à 116
+//Affiner l'affichage
+
+SELECT ID_GARE_DEPART, SAISON, MOIS, SUM(PRIX)
+FROM TICKET JOIN 
+DATE_DATE ON TICKET.ID_DATE = DATE_DATE.ID_DATE
+GROUP BY ID_GARE_DEPART, SAISON, MOIS
+ORDER BY ID_GARE_DEPART;
+
+
+OK - Requête 2 : Prix total des billets vendus pour chaque trajet (gare de départ et d’arrivée) en fonction du mois
+
+//LEA requête testée avec la gare de départ 96 vers 7 j'ai rajouté un ticket de et la somme est passée de 98,31 au double
+
+SELECT ID_GARE_DEPART, ID_GARE_ARRIVEE, MOIS, SUM(prix) 
+FROM TICKET 
+JOIN GARE ON TICKET.ID_GARE_DEPART = GARE.ID_GARE 
+JOIN GARE ON TICKET.ID_GARE_ARRIVEE = GARE.ID_GARE 
+JOIN DATE_DATE ON TICKET.ID_DATE = DATE_DATE.ID_DATE
+GROUP BY ID_GARE_DEPART, ID_GARE_ARRIVEE, MOIS
+ORDER BY ID_GARE_DEPART, ID_GARE_ARRIVEE;
+
+
+OK - Requête 3 : Quel est le prix moyen d'un ticket pour un trajet en fonction du type de train emprunté ?
+
+//TODO rajouter les coalesce pour remplir les lignes du ROLLUP
+//LEA requête testée avec le train 96 vers 7 et le ticket à 1000 
+
+SELECT ID_GARE_DEPART, ID_GARE_ARRIVEE, TYPE_TRAIN, AVG(PRIX)
+FROM TICKET JOIN TRAIN ON TICKET.ID_TRAIN=TRAIN.ID_TRAIN
+GROUP BY ROLLUP(ID_GARE_DEPART, ID_GARE_ARRIVEE, TYPE_TRAIN);
+
+
+OK - Requête 4 : Le nombre de tickets vendus pour une certaine promotion ou une certaine carte en fonction des gares ou des régions et des années
+//TODO reformuler psk là elle est pas analytique, il faut comparer toutes ! mais il faut avoir certaines promotions identiques (année différentes) que l'on peut comparer entre elles
+
+//LEA requête testée avec le promo 8 qui donne COUNT = 1 !
+
+//exemple : billets à 1€ vendus selon les étés 2020, 2021
+//TODO faut mettre des réducs qui durent que l'été, été 2020, été 2021...
+
+SELECT PROMOTION.ID_PROMOTION, POURCENTAGE_REDUCTION, DEBUT_PROMO, FIN_PROMO, COUNT(*)
+FROM TICKET JOIN
+PROMOTION ON TICKET.ID_PROMOTION = PROMOTION.ID_PROMOTION
+GROUP BY PROMOTION.ID_PROMOTION, POURCENTAGE_REDUCTION, DEBUT_PROMO, FIN_PROMO;
+
+
+Requête 5 : Nombre de ticket vendus à des jeunes n’ayant ps la carte alors qu’ils auraient pu pour chaque trajet
+//ERREUR REQUETE PAS ANALYTIQUE
+//TODO Demander profs si on peut faire des requêtes sans la mesure
+//TODO Ajouter des voyageurs pour un meme train avec ou non des promotions
+//TODO Rajouter un having count pour enlever les trajets ou il y a peu de voyageurs (realité)
+
+
+Requête 6 : 
+
+Requêtes pour l'occupation des trains : 
+//TODO ATTENTION VOIR COURS SNAPSHOT ON PEUT PAS DEMANDER N IMPORTE QUOI EN FONCTION DE SI LA MESURE EST ADDITIVE OU NON
+// On va dire qu'on enregistre chaque jour
+//TODO on devrait pas ajouter une condition pour la date, pour sélectionner les enregistrements d'ajd ?
+
+Requête 1 : Quel est le taux d'occupation de chaque trajet en fonction du type de train utilisé aujourd'hui (cette semaine?) ? 
+
+//TODO pas bonne ! dans le coalesce il faut que le deuxième type soit du même que le premier
+//TODO il faut comprendre mieux le ROLLUP
+SELECT 
+COALESCE(ID_GARE_DEPART, 000) AS GARE_DEPART,
+COALESCE(ID_GARE_ARRIVEE, 111) AS GARE_ARRIVEE,
+COALESCE(TYPE_TRAIN, 'TOUS LES TYPES DE TRAINS') AS TYPE_TRAIN,
+TAUX_OCCUPATION AS TAUX_OCCUPATION
+FROM TRAJET JOIN TRAIN ON TRAJET.ID_TRAIN = TRAIN.ID_TRAIN
+GROUP BY ROLLUP(ID_GARE_DEPART, ID_GARE_ARRIVEE, TYPE_TRAIN, TAUX_OCCUPATION);
+
+
+Requête 2 : Quels est le taux d'occupation moyen des trains au départ de chaque ville de chaque département aujourd'hui ?
+//TODO question requête mal formulée
+
+SELECT DEPARTEMENT_GARE, VILLE_GARE, AVG(TAUX_OCCUPATION)
+FROM TRAJET JOIN GARE ON TRAJET.ID_GARE_DEPART = GARE.ID_GARE 
+GROUP BY DEPARTEMENT_GARE, VILLE_GARE;
+
+
+Requête 3 : Le taux d’occupation pour chaque trajet aux différentes heures de la journée (aujourd'hui)
+
+SELECT ID_GARE_DEPART, ID_GARE_ARRIVEE, HEURES, TAUX_OCCUPATION
+FROM TRAJET JOIN DATE_TIME on TRAJET.ID_TIME=DATE_TIME.ID_TIME
+GROUP BY ID_GARE_DEPART, ID_GARE_ARRIVEE, HEURES, TAUX_OCCUPATION;
+
+
+Requête 4 : Quels est le taux d'occupation moyen des trains en gare d’arrivée de chaque département et chaque ville aujourd'hui ?
+
+SELECT ID_GARE_ARRIVEE, CODE_DEPARTEMENT_GARE, DEPARTEMENT_GARE, VILLE_GARE, TAUX_OCCUPATION 
+FROM TRAJET JOIN GARE ON TRAJET.ID_GARE_ARRIVEE = GARE.ID_GARE
+GROUP BY ID_GARE_ARRIVEE, CODE_DEPARTEMENT_GARE, DEPARTEMENT_GARE, VILLE_GARE, TAUX_OCCUPATION;
+
+
+
+
